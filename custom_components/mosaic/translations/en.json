@@ -1,0 +1,81 @@
+{
+  "config": {
+    "flow_title": "Mosaic LED Display",
+    "step": {
+      "user": {
+        "title": "Mosaic Setup",
+        "description": "Set up your Mosaic LED display",
+        "data": {
+          "auto_detect": "Auto-detect add-on"
+        }
+      },
+      "manual": {
+        "title": "Manual Configuration",
+        "description": "Enter Mosaic add-on details",
+        "data": {
+          "url": "Base URL",
+          "api_key": "API Key (optional)",
+          "verify_ssl": "Verify SSL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Mosaic",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Mosaic is already configured",
+      "reconfigure_successful": "Configuration updated"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Mosaic Options",
+        "data": {
+          "url": "Base URL",
+          "api_key": "API Key",
+          "verify_ssl": "Verify SSL"
+        }
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "mosaic": {
+        "name": "Brightness"
+      }
+    },
+    "switch": {
+      "mosaic_power": {
+        "name": "Power"
+      },
+      "mosaic_rotation": {
+        "name": "Rotation"
+      }
+    },
+    "sensor": {
+      "mosaic_status": {
+        "name": "Status"
+      }
+    }
+  },
+  "service": {
+    "push_text": {
+      "name": "Push Text",
+      "description": "Display text on a Mosaic display"
+    },
+    "push_image": {
+      "name": "Push Image",
+      "description": "Display image on a Mosaic display"
+    },
+    "show_app": {
+      "name": "Show App",
+      "description": "Show a specific app temporarily"
+    },
+    "clear": {
+      "name": "Clear",
+      "description": "Clear notifications and return to rotation"
+    }
+  }
+}
