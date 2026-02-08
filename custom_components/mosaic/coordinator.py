@@ -2,13 +2,10 @@
 
 import logging
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
-    UpdateFailed,
-)
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import MosaicAPIClient, MosaicAPIError
 from .const import DOMAIN, DEFAULT_POLL_INTERVAL
@@ -20,12 +17,6 @@ class MosaicDataUpdateCoordinator(DataUpdateCoordinator):
     """Data update coordinator for Mosaic."""
 
     def __init__(self, hass: HomeAssistant, api: MosaicAPIClient):
-        """Initialize the coordinator.
-
-        Args:
-            hass: Home Assistant instance
-            api: Mosaic API client
-        """
         super().__init__(
             hass,
             _LOGGER,
@@ -33,100 +24,35 @@ class MosaicDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_POLL_INTERVAL),
         )
         self.api = api
-        self.last_status: Optional[Dict[str, Any]] = None
 
     async def _async_update_data(self) -> Dict[str, Any]:
-        """Update data from Mosaic add-on."""
+        """Update data from Mosaic."""
         try:
-            data = {
-                "status": await self.api.get_status(),
-                "displays": await self.api.get_displays(),
-            }
-
-            # Get rotation config for each display
-            if data["displays"]:
-                data["rotation_configs"] = {}
-                for display in data["displays"]:
-                    try:
-                        display_id = display.get("id", "default")
-                        data["rotation_configs"][display_id] = (
-                            await self.api.get_rotation_config(display_id)
-                        )
-                    except MosaicAPIError as e:
-                        _LOGGER.warning(f"Failed to get rotation config for {display_id}: {e}")
-
-            self.last_status = data
-            return data
-
+            displays = await self.api.get_displays()
+            
+            # Build display data with rotation info
+            display_data = {}
+            for disp in displays:
+                display_id = disp.get("id", "default")
+                try:
+                    rotation = await self.api.get_rotation(display_id)
+                    disp["rotation"] = rotation
+                except MosaicAPIError:
+                    disp["rotation"] = {"enabled": True, "apps": []}
+                display_data[display_id] = disp
+            
+            return {"displays": display_data}
         except MosaicAPIError as err:
-            raise UpdateFailed(f"Error communicating with Mosaic add-on: {err}")
-        except Exception as err:
-            raise UpdateFailed(f"Unexpected error: {err}")
+            raise UpdateFailed(f"Error communicating with Mosaic: {err}")
 
-    async def async_push_text(
-        self,
-        display_id: str,
-        text: str,
-        duration: int = 10,
-        priority: str = "normal",
-        color: str = "#FFFFFF",
-        font: str = "default",
-    ) -> Dict[str, Any]:
-        """Push text to display."""
-        try:
-            result = await self.api.push_text(
-                display_id=display_id,
-                text=text,
-                duration=duration,
-                priority=priority,
-                color=color,
-                font=font,
-            )
-            # Refresh data after push
-            await self.async_request_refresh()
-            return result
-        except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to push text: {err}")
+    def get_display(self, display_id: str) -> Dict[str, Any]:
+        """Get display data by ID."""
+        displays = self.data.get("displays", {})
+        return displays.get(display_id, {})
 
-    async def async_push_image(
-        self, display_id: str, image: str, duration: int = 10, priority: str = "normal"
-    ) -> Dict[str, Any]:
-        """Push image to display."""
-        try:
-            result = await self.api.push_image(
-                display_id=display_id,
-                image=image,
-                duration=duration,
-                priority=priority,
-            )
-            await self.async_request_refresh()
-            return result
-        except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to push image: {err}")
-
-    async def async_show_app(
-        self, display_id: str, app_id: str, duration: int = 30
-    ) -> Dict[str, Any]:
-        """Show app temporarily."""
-        try:
-            result = await self.api.show_app(
-                display_id=display_id,
-                app_id=app_id,
-                duration=duration,
-            )
-            await self.async_request_refresh()
-            return result
-        except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to show app: {err}")
-
-    async def async_clear(self, display_id: str) -> Dict[str, Any]:
-        """Clear notifications."""
-        try:
-            result = await self.api.clear(display_id=display_id)
-            await self.async_request_refresh()
-            return result
-        except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to clear: {err}")
+    def get_display_ids(self) -> List[str]:
+        """Get list of display IDs."""
+        return list(self.data.get("displays", {}).keys())
 
     async def async_set_brightness(self, display_id: str, brightness: int) -> None:
         """Set brightness."""
@@ -134,7 +60,7 @@ class MosaicDataUpdateCoordinator(DataUpdateCoordinator):
             await self.api.set_brightness(display_id, brightness)
             await self.async_request_refresh()
         except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to set brightness: {err}")
+            _LOGGER.error(f"Failed to set brightness: {err}")
 
     async def async_set_power(self, display_id: str, power: bool) -> None:
         """Set power state."""
@@ -142,12 +68,27 @@ class MosaicDataUpdateCoordinator(DataUpdateCoordinator):
             await self.api.set_power(display_id, power)
             await self.async_request_refresh()
         except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to set power: {err}")
+            _LOGGER.error(f"Failed to set power: {err}")
 
     async def async_set_rotation_enabled(self, display_id: str, enabled: bool) -> None:
-        """Set rotation enabled state."""
+        """Set rotation enabled."""
         try:
             await self.api.set_rotation_enabled(display_id, enabled)
             await self.async_request_refresh()
         except MosaicAPIError as err:
-            raise UpdateFailed(f"Failed to set rotation: {err}")
+            _LOGGER.error(f"Failed to set rotation: {err}")
+
+    async def async_push_text(self, text: str, duration: int = 10, color: str = "#FFFFFF") -> None:
+        """Push text notification."""
+        try:
+            await self.api.push_text(text, duration, color)
+        except MosaicAPIError as err:
+            _LOGGER.error(f"Failed to push text: {err}")
+
+    async def async_skip(self, display_id: str) -> None:
+        """Skip to next app."""
+        try:
+            await self.api.skip(display_id)
+            await self.async_request_refresh()
+        except MosaicAPIError as err:
+            _LOGGER.error(f"Failed to skip: {err}")

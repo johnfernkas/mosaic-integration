@@ -1,109 +1,28 @@
 push_text:
-  description: Display text on a Mosaic display
+  name: Push Text
+  description: Display text notification on Mosaic
   fields:
-    target:
-      selector:
-        text:
-      description: Display ID or "all" for all displays
-      example: kitchen
     text:
-      selector:
-        text:
+      name: Text
       description: Text to display
       required: true
-      example: "Hello World"
+      selector:
+        text:
     duration:
-      selector:
-        number:
-          min: 0
-          max: 3600
-          unit_of_measurement: seconds
-      description: Duration in seconds (0 = sticky)
-      default: 10
-    priority:
-      selector:
-        select:
-          options:
-            - low
-            - normal
-            - high
-            - sticky
-      description: Priority level
-      default: normal
-    color:
-      selector:
-        color_rgb:
-      description: Text color (hex)
-      default: [255, 255, 255]
-    font:
-      selector:
-        text:
-      description: Font name
-      default: default
-
-push_image:
-  description: Display image on a Mosaic display
-  fields:
-    target:
-      selector:
-        text:
-      description: Display ID or "all" for all displays
-      example: kitchen
-    image:
-      selector:
-        text:
-      description: Path or URL to image
-      required: true
-      example: "/config/www/image.png"
-    duration:
-      selector:
-        number:
-          min: 0
-          max: 3600
-          unit_of_measurement: seconds
+      name: Duration
       description: Duration in seconds
       default: 10
-    priority:
-      selector:
-        select:
-          options:
-            - low
-            - normal
-            - high
-            - sticky
-      description: Priority level
-      default: normal
-
-show_app:
-  description: Show a specific app temporarily on a Mosaic display
-  fields:
-    target:
-      selector:
-        text:
-      description: Display ID
-      required: true
-      example: kitchen
-    app:
-      selector:
-        text:
-      description: App ID to show
-      required: true
-      example: fuzzyclock
-    duration:
       selector:
         number:
           min: 1
-          max: 3600
-          unit_of_measurement: seconds
-      description: Duration in seconds before returning to rotation
-      default: 30
-
-clear:
-  description: Clear all notifications and return to app rotation
-  fields:
-    target:
+          max: 300
+    color:
+      name: Color
+      description: Text color (hex)
+      default: "#FFFFFF"
       selector:
         text:
-      description: Display ID or "all" for all displays
-      default: all
-      example: kitchen
+
+skip:
+  name: Skip
+  description: Skip to next app in rotation

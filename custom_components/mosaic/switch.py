@@ -1,9 +1,9 @@
-"""Switch entities for Mosaic display control."""
+"""Switch entities for Mosaic."""
 
 import logging
 from typing import Any
 
-from homeassistant.components.switch import SwitchEntity, SwitchEntityFeature
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -22,97 +22,62 @@ async def async_setup_entry(
 ) -> None:
     """Set up switch entities."""
     coordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
-
-    # Get displays from coordinator data
-    displays = coordinator.data.get("displays", [])
+    
     entities = []
-
-    for display in displays:
-        display_id = display.get("id", "default")
-        display_name = display.get("name", "Mosaic")
-
-        # Power switch
-        entities.append(MosaicPowerSwitch(coordinator, display))
-
-        # Rotation switch
-        entities.append(MosaicRotationSwitch(coordinator, display))
-
+    for display_id in coordinator.get_display_ids():
+        entities.append(MosaicPowerSwitch(coordinator, display_id))
+        entities.append(MosaicRotationSwitch(coordinator, display_id))
+    
     async_add_entities(entities)
 
 
 class MosaicPowerSwitch(CoordinatorEntity, SwitchEntity):
-    """Switch for display power control."""
+    """Mosaic power switch."""
 
-    def __init__(self, coordinator: MosaicDataUpdateCoordinator, display: dict) -> None:
-        """Initialize the switch."""
+    def __init__(self, coordinator: MosaicDataUpdateCoordinator, display_id: str) -> None:
         super().__init__(coordinator)
-        self.display = display
-        self._display_id = display.get("id", "default")
-        self._display_name = display.get("name", "Mosaic")
+        self._display_id = display_id
+        display = coordinator.get_display(display_id)
+        self._attr_unique_id = f"mosaic_{display_id}_power"
+        self._attr_name = f"{display.get('name', display_id)} Power"
+        self._attr_icon = "mdi:power"
 
-        self._attr_unique_id = f"mosaic_power_{self._display_id}"
-        self._attr_name = f"{self._display_name} Power"
-        self._attr_device_name = self._display_name
+    @property
+    def _display(self) -> dict:
+        return self.coordinator.get_display(self._display_id)
 
     @property
     def is_on(self) -> bool:
-        """Return True if display is powered on."""
-        return self.display.get("power", True)
+        return self._display.get("power", True)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn on the display."""
         await self.coordinator.async_set_power(self._display_id, True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn off the display."""
         await self.coordinator.async_set_power(self._display_id, False)
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return extra state attributes."""
-        return {
-            "display_id": self._display_id,
-        }
 
 
 class MosaicRotationSwitch(CoordinatorEntity, SwitchEntity):
-    """Switch for app rotation control."""
+    """Mosaic rotation switch."""
 
-    def __init__(self, coordinator: MosaicDataUpdateCoordinator, display: dict) -> None:
-        """Initialize the switch."""
+    def __init__(self, coordinator: MosaicDataUpdateCoordinator, display_id: str) -> None:
         super().__init__(coordinator)
-        self.display = display
-        self._display_id = display.get("id", "default")
-        self._display_name = display.get("name", "Mosaic")
+        self._display_id = display_id
+        display = coordinator.get_display(display_id)
+        self._attr_unique_id = f"mosaic_{display_id}_rotation"
+        self._attr_name = f"{display.get('name', display_id)} Rotation"
+        self._attr_icon = "mdi:rotate-3d-variant"
 
-        self._attr_unique_id = f"mosaic_rotation_{self._display_id}"
-        self._attr_name = f"{self._display_name} Rotation"
-        self._attr_device_name = self._display_name
+    @property
+    def _display(self) -> dict:
+        return self.coordinator.get_display(self._display_id)
 
     @property
     def is_on(self) -> bool:
-        """Return True if rotation is enabled."""
-        rotation_config = self.coordinator.data.get("rotation_configs", {}).get(
-            self._display_id, {}
-        )
-        return rotation_config.get("enabled", True)
+        return self._display.get("rotation_enabled", True)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Enable rotation."""
         await self.coordinator.async_set_rotation_enabled(self._display_id, True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Disable rotation."""
         await self.coordinator.async_set_rotation_enabled(self._display_id, False)
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return extra state attributes."""
-        rotation_config = self.coordinator.data.get("rotation_configs", {}).get(
-            self._display_id, {}
-        )
-        return {
-            "display_id": self._display_id,
-            "dwell_seconds": rotation_config.get("dwell_seconds", "unknown"),
-            "app_count": len(rotation_config.get("apps", [])),
-        }

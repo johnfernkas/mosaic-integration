@@ -20,7 +20,7 @@ Home Assistant integration for the **Mosaic LED Display** add-on. Control and in
 
 1. Open HACS → Integrations
 2. Click the **+ Create my own repository** button
-3. Enter repository URL: `https://github.com/johnfernkas/mosaic`
+3. Enter repository URL: `https://github.com/johnfernkas/mosaic-integration`
 4. Select category: **Integration**
 5. Click **CREATE**
 6. Install the Mosaic integration
@@ -294,7 +294,7 @@ PUT /api/displays/{id}
 Body: {brightness, power, rotation}
 ```
 
-See [DESIGN.md](https://github.com/johnfernkas/mosaic/blob/main/DESIGN.md) for complete API spec.
+See [DESIGN.md](https://github.com/johnfernkas/mosaic-integration/blob/main/DESIGN.md) for complete API spec.
 
 ## License
 
@@ -312,9 +312,9 @@ Contributions are welcome! Please:
 ## Support
 
 For issues, feature requests, or questions:
-- Open an issue on [GitHub](https://github.com/johnfernkas/mosaic/issues)
-- Check the [Mosaic design doc](https://github.com/johnfernkas/mosaic/blob/main/DESIGN.md)
+- Open an issue on [GitHub](https://github.com/johnfernkas/mosaic-integration/issues)
+- Check the [Mosaic design doc](https://github.com/johnfernkas/mosaic-integration/blob/main/DESIGN.md)
 
 ---
 
-**Mosaic** — LED display server for Home Assistant | [GitHub](https://github.com/johnfernkas/mosaic)
+**Mosaic** — LED display server for Home Assistant | [GitHub](https://github.com/johnfernkas/mosaic-integration)

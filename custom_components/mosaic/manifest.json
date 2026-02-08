@@ -5,7 +5,7 @@
   "codeowners": ["@johnfernkas"],
   "config_flow": true,
   "documentation": "https://github.com/johnfernkas/mosaic",
-  "requirements": ["aiohttp>=3.8.0", "pixlet-client>=0.1.0"],
+  "requirements": ["aiohttp>=3.8.0"],
   "version": "0.1.0",
   "issue_tracker": "https://github.com/johnfernkas/mosaic/issues",
   "homeassistant": "2023.11.0"

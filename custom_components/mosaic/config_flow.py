@@ -23,7 +23,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 STEP_MANUAL_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_URL): str,
+        vol.Required(CONF_URL, default="http://localhost:8176"): str,
         vol.Optional(CONF_API_KEY): str,
         vol.Optional(CONF_VERIFY_SSL, default=True): bool,
     }
@@ -54,12 +54,18 @@ class MosaicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Try to auto-detect the add-on."""
         if user_input is None:
-            # Try common URLs
-            for url in [
-                "http://a0d7b954-mosaic:8176",  # Standard HA add-on DNS
+            # Try common URLs - add-on hostnames vary by installation method
+            urls_to_try = [
                 "http://localhost:8176",
                 "http://127.0.0.1:8176",
-            ]:
+                "http://homeassistant.local:8176",
+                "http://homeassistant:8176",
+                "http://mosaic:8176",  # Docker network name
+                "http://addon_mosaic:8176",
+                "http://a0d7b954-mosaic:8176",  # Repository-based slug
+            ]
+            
+            for url in urls_to_try:
                 try:
                     api = MosaicAPIClient(url)
                     status = await api.get_status()
@@ -74,7 +80,11 @@ class MosaicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             CONF_VERIFY_SSL: True,
                         },
                     )
-                except MosaicAPIError:
+                except MosaicAPIError as e:
+                    _LOGGER.debug(f"Could not connect to {url}: {e}")
+                    continue
+                except Exception as e:
+                    _LOGGER.debug(f"Error trying {url}: {e}")
                     continue
 
             _LOGGER.warning("Could not auto-detect Mosaic add-on")
