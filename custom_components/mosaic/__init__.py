@@ -60,10 +60,12 @@ async def async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         text = call.data.get("text", "")
         duration = call.data.get("duration", 10)
         color = call.data.get("color", "#FFFFFF")
-        await coordinator.async_push_text(text, duration, color)
+        display_id = call.data.get("display_id")
+        await coordinator.async_push_text(text, duration, color, display_id)
 
     async def handle_skip(call) -> None:
-        await coordinator.async_skip()
+        display_id = call.data.get("display_id")
+        await coordinator.async_skip(display_id)
 
     hass.services.async_register(DOMAIN, "push_text", handle_push_text)
     hass.services.async_register(DOMAIN, "skip", handle_skip)

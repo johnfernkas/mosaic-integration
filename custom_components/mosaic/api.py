@@ -109,13 +109,16 @@ class MosaicAPIClient:
     # Notifications
     # -------------------------------------------------------------------------
 
-    async def push_text(self, text: str, duration: int = 10, color: str = "#FFFFFF") -> Dict[str, Any]:
-        """Push text notification."""
-        return await self._request("POST", "/api/notify", {
+    async def push_text(self, text: str, duration: int = 10, color: str = "#FFFFFF", display_id: str = None) -> Dict[str, Any]:
+        """Push text notification to a specific display or first display."""
+        payload = {
             "text": text,
             "duration": duration,
             "color": color,
-        })
+        }
+        if display_id:
+            payload["display_id"] = display_id
+        return await self._request("POST", "/api/notify", payload)
 
     async def show_app(self, app_id: str, duration: int = 30) -> Dict[str, Any]:
         """Show app temporarily."""

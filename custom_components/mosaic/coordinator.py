@@ -78,15 +78,20 @@ class MosaicDataUpdateCoordinator(DataUpdateCoordinator):
         except MosaicAPIError as err:
             _LOGGER.error(f"Failed to set rotation: {err}")
 
-    async def async_push_text(self, text: str, duration: int = 10, color: str = "#FFFFFF") -> None:
-        """Push text notification."""
+    async def async_push_text(self, text: str, duration: int = 10, color: str = "#FFFFFF", display_id: str = None) -> None:
+        """Push text notification to a specific display or first display."""
         try:
-            await self.api.push_text(text, duration, color)
+            await self.api.push_text(text, duration, color, display_id)
         except MosaicAPIError as err:
             _LOGGER.error(f"Failed to push text: {err}")
 
-    async def async_skip(self, display_id: str) -> None:
-        """Skip to next app."""
+    async def async_skip(self, display_id: str = None) -> None:
+        """Skip to next app on a specific display or first display."""
+        if not display_id:
+            # Use first available display
+            display_ids = self.get_display_ids()
+            if display_ids:
+                display_id = display_ids[0]
         try:
             await self.api.skip(display_id)
             await self.async_request_refresh()
